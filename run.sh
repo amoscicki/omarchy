@@ -96,6 +96,16 @@ fi
 echo -e "\e[32mPreflight checks: OK\e[0m"
 echo
 
+# ========== INSTALL REQUIRED TOOLS FIRST ==========
+echo "Installing required tools (gum, tte)..."
+if ! command -v gum &>/dev/null || ! command -v tte &>/dev/null; then
+  sudo pacman -Sy --noconfirm --needed gum python-terminaltexteffects
+  echo "Required tools installed."
+else
+  echo "Required tools already installed."
+fi
+echo
+
 # ========== LOAD HELPERS ==========
 echo "Loading helper functions..."
 source "$OMARCHY_INSTALL/helpers/all.sh"

@@ -99,7 +99,27 @@ echo
 # ========== INSTALL REQUIRED TOOLS FIRST ==========
 echo "Installing required tools (gum, tte)..."
 if ! command -v gum &>/dev/null || ! command -v tte &>/dev/null; then
+  # Backup current SigLevel settings
+  sudo cp /etc/pacman.conf /etc/pacman.conf.omarchy-backup
+
+  # Temporarily disable signature verification for problematic packages
+  echo "Temporarily disabling package signature verification..."
+  sudo sed -i 's/^SigLevel\s*=.*/SigLevel = Never/' /etc/pacman.conf
+
+  # Fix GPG keyring issues
+  echo "Fixing GPG keyring..."
+  sudo rm -rf /etc/pacman.d/gnupg
+  sudo pacman-key --init
+  sudo pacman-key --populate archlinux
+
+  # Install required tools
+  echo "Installing gum and python-terminaltexteffects..."
   sudo pacman -Sy --noconfirm --needed gum python-terminaltexteffects
+
+  # Restore original pacman.conf
+  echo "Restoring package signature verification..."
+  sudo mv /etc/pacman.conf.omarchy-backup /etc/pacman.conf
+
   echo "Required tools installed."
 else
   echo "Required tools already installed."

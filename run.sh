@@ -4,7 +4,7 @@
 # This script is designed to run on an already installed Arch Linux system (any filesystem)
 # It skips system installation but applies all packages, configs, and sets up first-run
 
-set -eEo pipefail
+set -e
 
 echo "=============================================="
 echo "  Omarchy Configuration Script"
@@ -26,11 +26,16 @@ cd "$SCRIPT_DIR"
 if [ "$SCRIPT_DIR" != "$OMARCHY_PATH" ]; then
   echo "Copying omarchy to $OMARCHY_PATH..."
   mkdir -p "$OMARCHY_PATH"
-  cp -R "$SCRIPT_DIR"/* "$OMARCHY_PATH/"
+  cp -R "$SCRIPT_DIR"/* "$OMARCHY_PATH/" || {
+    echo "Error: Failed to copy files to $OMARCHY_PATH"
+    echo "Check permissions and try again"
+    exit 1
+  }
   # Update paths
   cd "$OMARCHY_PATH"
   export OMARCHY_PATH="$HOME/.local/share/omarchy"
   export OMARCHY_INSTALL="$OMARCHY_PATH/install"
+  echo "Files copied successfully."
 fi
 
 abort() {
@@ -128,16 +133,26 @@ echo
 
 # ========== LOAD HELPERS ==========
 echo "Loading helper functions..."
-source "$OMARCHY_INSTALL/helpers/all.sh"
+if ! source "$OMARCHY_INSTALL/helpers/all.sh" 2>/dev/null; then
+  echo "Warning: Could not load helper functions, continuing anyway..."
+  # Define minimal run_logged function as fallback
+  run_logged() {
+    echo "Running: $1"
+    bash "$1" || {
+      echo "Error in $1, exit code: $?"
+      return 1
+    }
+  }
+fi
 
 # ========== RUN PREFLIGHT (EXCEPT GUARD) ==========
 echo "Running preflight setup..."
 # Skip guard.sh since we already did relaxed checks above
-run_logged "$OMARCHY_INSTALL/preflight/begin.sh"
-run_logged "$OMARCHY_INSTALL/preflight/show-env.sh"
-run_logged "$OMARCHY_INSTALL/preflight/pacman.sh"
-run_logged "$OMARCHY_INSTALL/preflight/migrations.sh"
-run_logged "$OMARCHY_INSTALL/preflight/first-run-mode.sh"
+run_logged "$OMARCHY_INSTALL/preflight/begin.sh" || echo "Warning: preflight/begin.sh failed, continuing..."
+run_logged "$OMARCHY_INSTALL/preflight/show-env.sh" || echo "Warning: preflight/show-env.sh failed, continuing..."
+run_logged "$OMARCHY_INSTALL/preflight/pacman.sh" || echo "Warning: preflight/pacman.sh failed, continuing..."
+run_logged "$OMARCHY_INSTALL/preflight/migrations.sh" || echo "Warning: preflight/migrations.sh failed, continuing..."
+run_logged "$OMARCHY_INSTALL/preflight/first-run-mode.sh" || echo "Warning: preflight/first-run-mode.sh failed, continuing..."
 
 # Skip disable-mkinitcpio.sh since we're not doing bootloader stuff
 echo "Skipping mkinitcpio disable (not needed for package-only install)"

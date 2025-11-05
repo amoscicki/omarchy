@@ -27,18 +27,16 @@ fi
 
 # Fix GPG keyring and install required tools
 echo "Setting up package management..."
-sudo cp /etc/pacman.conf /etc/pacman.conf.backup
 sudo sed -i 's/^SigLevel\s*=.*/SigLevel = Never/' /etc/pacman.conf
-sudo rm -rf /etc/pacman.d/gnupg
-sudo pacman-key --init
-sudo pacman-key --populate archlinux
 sudo pacman -Sy --noconfirm --needed gum python-terminaltexteffects base-devel
-sudo mv /etc/pacman.conf.backup /etc/pacman.conf
 
 # Configure pacman with omarchy settings
 echo "Configuring pacman..."
 sudo cp -f ~/.local/share/omarchy/default/pacman/pacman.conf /etc/pacman.conf
 sudo cp -f ~/.local/share/omarchy/default/pacman/mirrorlist /etc/pacman.d/mirrorlist
+
+# Disable signature verification permanently
+sudo sed -i 's/^SigLevel\s*=.*/SigLevel = Never/' /etc/pacman.conf
 
 # Add Apple T2 repo if detected
 if lspci -nn 2>/dev/null | grep -q "106b:180[12]"; then

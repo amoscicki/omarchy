@@ -2,7 +2,11 @@
 
 set -eu
 
-: "${OMARCHY_INSTALL:?OMARCHY_INSTALL is not set}"
+script_dir=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+
+if [ "${OMARCHY_INSTALL:-}" = "" ]; then
+  OMARCHY_INSTALL=$(dirname "$script_dir")
+fi
 
 pkg_file="$OMARCHY_INSTALL/omarchy-base.packages"
 
@@ -12,13 +16,10 @@ if [ ! -f "$pkg_file" ]; then
 fi
 
 set --
+
 line=""
 
-while true; do
-  if ! IFS= read -r line; then
-    [ -n "$line" ] || break
-  fi
-
+while IFS= read -r line || [ -n "$line" ]; do
   case "$line" in
     ''|'#'*)
       ;;
@@ -26,8 +27,6 @@ while true; do
       set -- "$@" "$line"
       ;;
   esac
-
-  line=""
 done < "$pkg_file"
 
 if [ "$#" -eq 0 ]; then

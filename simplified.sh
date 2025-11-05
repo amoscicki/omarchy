@@ -28,7 +28,7 @@ fi
 # Fix GPG keyring and install required tools
 echo "Setting up package management..."
 sudo sed -i 's/^SigLevel\s*=.*/SigLevel = Never/' /etc/pacman.conf
-sudo pacman -Sy --noconfirm --needed gum python-terminaltexteffects base-devel
+sudo pacman -Sy --noconfirm --needed --overwrite '*' gum python-terminaltexteffects base-devel
 
 # Configure pacman with omarchy settings
 echo "Configuring pacman..."
@@ -51,7 +51,7 @@ fi
 
 # Install all base packages
 echo "Installing base packages (~139 packages)..."
-sudo pacman -Sy --noconfirm --needed $(grep -v '^#' "$OMARCHY_INSTALL/omarchy-base.packages" | grep -v '^$')
+sudo pacman -Sy --noconfirm --needed --overwrite '*' $(grep -v '^#' "$OMARCHY_INSTALL/omarchy-base.packages" | grep -v '^$')
 
 # Install fonts
 echo "Installing fonts..."

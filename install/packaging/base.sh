@@ -35,16 +35,15 @@ if [ "$#" -eq 0 ]; then
 fi
 
 pacman_cmd="pacman"
+pacman_args="-S --noconfirm --needed"
 
 if [ "$(id -u)" -ne 0 ]; then
   if command -v sudo >/dev/null 2>&1; then
-    set -- sudo "$pacman_cmd" -S --noconfirm --needed "$@"
+    sudo "$pacman_cmd" $pacman_args "$@"
   else
     echo "sudo is required to install packages" >&2
     exit 1
   fi
 else
-  set -- "$pacman_cmd" -S --noconfirm --needed "$@"
+  "$pacman_cmd" $pacman_args "$@"
 fi
-
-"$@"

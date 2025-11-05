@@ -1,4 +1,8 @@
 echo "Checking and correcting Snapper configs if needed"
+if [[ -n ${OMARCHY_DISABLE_BTRFS_FEATURES:-} ]]; then
+  exit 0
+fi
+
 if command -v snapper &>/dev/null; then
   if ! sudo snapper list-configs 2>/dev/null | grep -q "root"; then
     sudo snapper -c root create-config /

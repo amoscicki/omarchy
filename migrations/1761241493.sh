@@ -1,4 +1,9 @@
 echo "Cleanup extra UKI if needed to prevent errors"
+
+if [[ -n ${OMARCHY_DISABLE_BTRFS_FEATURES:-} ]]; then
+  exit 0
+fi
+
 if [[ -f /boot/EFI/linux/omarchy_linux.efi ]] && [[ -f /boot/EFI/linux/$(cat /etc/machine-id)_linux.efi ]]; then
   sudo rm -f /boot/EFI/Linux/$(cat /etc/machine-id)_linux.efi
 
@@ -28,6 +33,8 @@ term_background_bright: 24283b
 
 EOF
     sudo limine-update
-    sudo limine-snapper-sync
+    if command -v limine-snapper-sync &>/dev/null; then
+      sudo limine-snapper-sync
+    fi
   fi
 fi

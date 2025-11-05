@@ -1,7 +1,18 @@
+confirm_continue() {
+  local prompt="$1"
+  if command -v gum &>/dev/null; then
+    gum confirm "$prompt"
+  else
+    read -p "$prompt [y/N] " -r
+    echo
+    [[ $REPLY =~ ^[Yy]$ ]]
+  fi
+}
+
 abort() {
   echo -e "\e[31mOmarchy install requires: $1\e[0m"
   echo
-  gum confirm "Proceed anyway on your own accord and without assistance?" || exit 1
+  confirm_continue "Proceed anyway on your own accord and without assistance?" || exit 1
 }
 
 # Must be an Arch distro
@@ -39,8 +50,21 @@ fi
 # Must have limine installed
 command -v limine &>/dev/null || abort "Limine bootloader"
 
-# Must have btrfs root filesystem
-[ "$(findmnt -n -o FSTYPE /)" = "btrfs" ] || abort "Btrfs root filesystem" 
+OMARCHY_ROOT_FSTYPE="$(findmnt -n -o FSTYPE /)"
+export OMARCHY_ROOT_FSTYPE
+
+if [ "$OMARCHY_ROOT_FSTYPE" != "btrfs" ]; then
+  echo -e "\e[33mWarning: Root filesystem is $OMARCHY_ROOT_FSTYPE (Btrfs recommended)\e[0m"
+  echo "Snapshot-related features will be disabled."
+  echo
+  export OMARCHY_DISABLE_BTRFS_FEATURES=1
+
+  if [[ -z ${OMARCHY_ALLOW_NON_BTRFS:-} ]]; then
+    confirm_continue "Continue without Btrfs-specific features?" || exit 1
+  fi
+else
+  unset OMARCHY_DISABLE_BTRFS_FEATURES
+fi
 
 # Cleared all guards
 echo "Guards: OK"

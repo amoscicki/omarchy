@@ -1,3 +1,8 @@
+if [[ -n ${OMARCHY_DISABLE_BTRFS_FEATURES:-} ]]; then
+  echo "Limine + Snapper setup skipped because the root filesystem is not Btrfs."
+  exit 0
+fi
+
 if command -v limine &>/dev/null; then
   sudo pacman -S --noconfirm --needed limine-snapper-sync limine-mkinitcpio-hook
 

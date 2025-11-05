@@ -85,10 +85,14 @@ fi
 
 # Warn about filesystem (not blocking)
 FSTYPE=$(findmnt -n -o FSTYPE /)
+export OMARCHY_ROOT_FSTYPE="$FSTYPE"
 if [ "$FSTYPE" != "btrfs" ]; then
   echo -e "\e[33mNote: Root filesystem is $FSTYPE (not Btrfs)\e[0m"
   echo "Snapshot features will be disabled, but everything else will work."
   echo
+  export OMARCHY_DISABLE_BTRFS_FEATURES=1
+else
+  unset OMARCHY_DISABLE_BTRFS_FEATURES
 fi
 
 # Warn about bootloader (not blocking)

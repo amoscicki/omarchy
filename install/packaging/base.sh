@@ -29,20 +29,10 @@ while IFS= read -r line || [ -n "$line" ]; do
   esac
 done < "$pkg_file"
 
-if [ "$#" -eq 0 ]; then
-  exit 0
-fi
-
-pacman_cmd="pacman"
-pacman_args="-S --noconfirm --needed"
-
-if [ "$(id -u)" -ne 0 ]; then
-  if command -v sudo >/dev/null 2>&1; then
-    sudo "$pacman_cmd" $pacman_args "$@"
+if [ "$#" -gt 0 ]; then
+  if command -v sudo >/dev/null 2>&1 && [ "$(id -u)" -ne 0 ]; then
+    sudo pacman -S --noconfirm --needed "$@"
   else
-    echo "sudo is required to install packages" >&2
-    exit 1
+    pacman -S --noconfirm --needed "$@"
   fi
-else
-  "$pacman_cmd" $pacman_args "$@"
 fi

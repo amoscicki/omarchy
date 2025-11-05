@@ -6,6 +6,25 @@
 
 set -e
 
+# Parse command line arguments
+SKIP_PREFLIGHT=false
+for arg in "$@"; do
+  case $arg in
+    --skip-preflight)
+      SKIP_PREFLIGHT=true
+      shift
+      ;;
+    --help)
+      echo "Usage: $0 [OPTIONS]"
+      echo ""
+      echo "Options:"
+      echo "  --skip-preflight    Skip system requirement checks (for development/testing)"
+      echo "  --help              Show this help message"
+      exit 0
+      ;;
+  esac
+done
+
 echo "=============================================="
 echo "  Omarchy Configuration Script"
 echo "  For existing Arch Linux installations"
@@ -49,57 +68,63 @@ abort() {
 }
 
 # ========== PREFLIGHT CHECKS (RELAXED) ==========
-echo "Running preflight checks..."
+if [ "$SKIP_PREFLIGHT" = true ]; then
+  echo -e "\e[33mSkipping preflight checks (--skip-preflight flag set)\e[0m"
+  echo -e "\e[33mWARNING: This is intended for development/testing only!\e[0m"
+  echo
+else
+  echo "Running preflight checks..."
 
-# Must be an Arch distro
-if [[ ! -f /etc/arch-release ]]; then
-  abort "Vanilla Arch"
-fi
-
-# Must not be an Arch derivative distro
-for marker in /etc/cachyos-release /etc/eos-release /etc/garuda-release /etc/manjaro-release; do
-  if [[ -f "$marker" ]]; then
+  # Must be an Arch distro
+  if [[ ! -f /etc/arch-release ]]; then
     abort "Vanilla Arch"
   fi
-done
 
-# Must not be running as root
-if [ "$EUID" -eq 0 ]; then
-  abort "Running as user (not root)"
-fi
+  # Must not be an Arch derivative distro
+  for marker in /etc/cachyos-release /etc/eos-release /etc/garuda-release /etc/manjaro-release; do
+    if [[ -f "$marker" ]]; then
+      abort "Vanilla Arch"
+    fi
+  done
 
-# Must be x86 only to fully work
-if [ "$(uname -m)" != "x86_64" ]; then
-  abort "x86_64 CPU"
-fi
-
-# Must not have Gnome or KDE already install
-if pacman -Qe gnome-shell &>/dev/null || pacman -Qe plasma-desktop &>/dev/null; then
-  echo -e "\e[33mWarning: GNOME Shell or KDE Plasma detected. This may cause conflicts.\e[0m"
-  read -p "Continue anyway? (y/N) " -n 1 -r
-  echo
-  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    exit 1
+  # Must not be running as root
+  if [ "$EUID" -eq 0 ]; then
+    abort "Running as user (not root)"
   fi
-fi
 
-# Warn about filesystem (not blocking)
-FSTYPE=$(findmnt -n -o FSTYPE /)
-if [ "$FSTYPE" != "btrfs" ]; then
-  echo -e "\e[33mNote: Root filesystem is $FSTYPE (not Btrfs)\e[0m"
-  echo "Snapshot features will be disabled, but everything else will work."
+  # Must be x86 only to fully work
+  if [ "$(uname -m)" != "x86_64" ]; then
+    abort "x86_64 CPU"
+  fi
+
+  # Must not have Gnome or KDE already install
+  if pacman -Qe gnome-shell &>/dev/null || pacman -Qe plasma-desktop &>/dev/null; then
+    echo -e "\e[33mWarning: GNOME Shell or KDE Plasma detected. This may cause conflicts.\e[0m"
+    read -p "Continue anyway? (y/N) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      exit 1
+    fi
+  fi
+
+  # Warn about filesystem (not blocking)
+  FSTYPE=$(findmnt -n -o FSTYPE /)
+  if [ "$FSTYPE" != "btrfs" ]; then
+    echo -e "\e[33mNote: Root filesystem is $FSTYPE (not Btrfs)\e[0m"
+    echo "Snapshot features will be disabled, but everything else will work."
+    echo
+  fi
+
+  # Warn about bootloader (not blocking)
+  if ! command -v limine &>/dev/null; then
+    echo -e "\e[33mNote: Limine bootloader not detected\e[0m"
+    echo "Bootloader configuration will be skipped. You'll need to configure your bootloader manually if needed."
+    echo
+  fi
+
+  echo -e "\e[32mPreflight checks: OK\e[0m"
   echo
 fi
-
-# Warn about bootloader (not blocking)
-if ! command -v limine &>/dev/null; then
-  echo -e "\e[33mNote: Limine bootloader not detected\e[0m"
-  echo "Bootloader configuration will be skipped. You'll need to configure your bootloader manually if needed."
-  echo
-fi
-
-echo -e "\e[32mPreflight checks: OK\e[0m"
-echo
 
 # ========== INSTALL REQUIRED TOOLS FIRST ==========
 echo "Installing required tools (gum, tte)..."

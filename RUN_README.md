@@ -84,6 +84,15 @@ Skrypt będzie:
 - Pokazywał postęp instalacji
 - Logował wszystko do `/var/log/omarchy-install.log`
 
+#### Opcje wiersza poleceń:
+
+```bash
+./run.sh --help              # Pokaż pomoc
+./run.sh --skip-preflight    # Pomiń sprawdzanie wymagań systemowych (dla dev/testing)
+```
+
+**Uwaga**: Flaga `--skip-preflight` jest przeznaczona **tylko do testowania/developmentu** w środowiskach nie-Arch. W produkcji zawsze uruchamiaj skrypt bez tej flagi na prawdziwym Arch Linux!
+
 ### 3. Po zakończeniu - restart:
 
 ```bash
